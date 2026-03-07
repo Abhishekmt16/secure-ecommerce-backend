@@ -11,7 +11,8 @@ import com.securecommerce.app.repository.TransactionRepository;
 import com.securecommerce.app.repository.UserRepository;
 import com.securecommerce.app.dto.FraudRequest;
 import com.securecommerce.app.dto.FraudResponse;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -21,6 +22,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
+
+    private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -36,6 +39,7 @@ public class OrderController {
 
     @Autowired
     private CartItemRepository cartItemRepository;
+
 
     @PostMapping("/checkout/{userId}")
     public String checkout(@PathVariable Long userId) {
@@ -60,28 +64,67 @@ public class OrderController {
         );
 
         String risk = response.getResult();
+        logger.info("Fraud risk for user {} is {}", userId, risk);
 
-        if (risk.equals("HIGH")) {
+        if (risk.equals("LOW")) {
+
+            logger.info("LOW risk transaction for user {}", userId);
+
+            Order order = new Order();
+            order.setTotalAmount(amount);
+            order.setUser(user);
+            orderRepository.save(order);
 
             Transaction txn = new Transaction();
             txn.setAmount(amount);
-            txn.setStatus(TransactionStatus.FRAUD.name());
+            txn.setStatus(TransactionStatus.SUCCESS.name());
             txn.setUser(user);
             transactionRepository.save(txn);
 
-            return "Transaction blocked due to HIGH fraud risk";
-        }
+            cartItemRepository.deleteAll(cartItems);
 
+            return "LOW risk - Order placed successfully";
+        }
         else if (risk.equals("MEDIUM")) {
 
-            // Simulate biometric verification
-            String biometricResponse = restTemplate.postForObject(
+            logger.info("MEDIUM risk - OTP triggered for user {}", userId);
+
+            String otpResponse = restTemplate.postForObject(
+                    "http://localhost:5000/otp/verify",
+                    null,
+                    String.class
+            );
+
+            if (!otpResponse.contains("OTP_VERIFIED")) {
+                return "OTP verification failed";
+            }
+
+            Order order = new Order();
+            order.setTotalAmount(amount);
+            order.setUser(user);
+            orderRepository.save(order);
+
+            Transaction txn = new Transaction();
+            txn.setAmount(amount);
+            txn.setStatus(TransactionStatus.SUCCESS.name());
+            txn.setUser(user);
+            transactionRepository.save(txn);
+
+            cartItemRepository.deleteAll(cartItems);
+
+            return "MEDIUM risk - OTP verified. Order placed.";
+        }
+        else if (risk.equals("HIGH")) {
+
+            logger.info("HIGH risk - Biometric triggered for user {}", userId);
+
+            String bioResponse = restTemplate.postForObject(
                     "http://localhost:5000/biometric/verify",
                     null,
                     String.class
             );
 
-            if (!biometricResponse.contains("VERIFIED")) {
+            if (!bioResponse.contains("VERIFIED")) {
                 return "Biometric verification failed";
             }
 
@@ -95,26 +138,12 @@ public class OrderController {
             txn.setStatus(TransactionStatus.SUCCESS.name());
             txn.setUser(user);
             transactionRepository.save(txn);
+
             cartItemRepository.deleteAll(cartItems);
 
-            return "Biometric Authentication Successful - Order Placed";
+            return "HIGH risk - Biometric verified. Order placed.";
         }
 
-        else { // LOW
-
-            Order order = new Order();
-            order.setTotalAmount(amount);
-            order.setUser(user);
-            orderRepository.save(order);
-
-            Transaction txn = new Transaction();
-            txn.setAmount(amount);
-            txn.setStatus(TransactionStatus.SUCCESS.name());
-            txn.setUser(user);
-            transactionRepository.save(txn);
-            cartItemRepository.deleteAll(cartItems);
-
-            return "Order placed successfully (LOW risk)";
-        }
+        return "Unable to process transaction";
     }
 }

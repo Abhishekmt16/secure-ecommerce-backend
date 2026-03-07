@@ -1,5 +1,8 @@
 package com.securecommerce.app.entity;
-
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import jakarta.persistence.Column;
 import jakarta.persistence.*;
 @Entity@Table(name ="users")
 public class User {
@@ -7,8 +10,16 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Name is required")
     private String name;
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    @Column(unique = true)
     private String email;
+
+    @NotBlank(message = "Password required")
+    @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
 
     public Long getId(){

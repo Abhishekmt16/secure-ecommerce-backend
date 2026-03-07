@@ -24,8 +24,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleAllExceptions(Exception ex) {
+
+        ex.printStackTrace();   // 👈 VERY IMPORTANT
+
         return new ResponseEntity<>(
-                "Something went wrong. Please try again.",
+                ex.getMessage(),   // 👈 SHOW ACTUAL ERROR
                 HttpStatus.INTERNAL_SERVER_ERROR
         );
     }
