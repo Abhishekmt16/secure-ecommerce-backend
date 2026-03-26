@@ -1,66 +1,64 @@
-# 🔐 Secure E-Commerce Application with AI Fraud Detection
+# 🔐 Secure E-Commerce Application with AI Fraud Detection & Adaptive Authentication
 
-A secure, backend-focused e-commerce application that integrates **AI-based fraud detection** and **biometric verification workflows** to prevent high-risk transactions.
-Built as a **major academic project** with real-world architecture and microservice-style integration.
+A secure backend-focused e-commerce application that integrates **AI-based fraud detection** with **risk-based multi-factor authentication** (OTP & Biometric) to protect online transactions.
+
+Built as a major academic project with real-world architecture and microservice-style integration.
 
 ---
 
 ## 📌 Project Overview
 
-This project simulates a real-world **secure e-commerce system** where transactions are dynamically evaluated using an **AI fraud detection service**.
-Based on the fraud risk level (LOW / MEDIUM / HIGH), the system decides whether to:
+This project simulates a real-world secure e-commerce system where each transaction is dynamically evaluated using an AI fraud detection service.
 
-* Allow the transaction directly
-* Require biometric verification
-* Block the transaction completely
+Based on the detected fraud risk level (LOW / MEDIUM / HIGH), the system applies adaptive authentication:
 
-The backend is built using **Spring Boot**, while fraud analysis is handled by a **separate Python service**, communicating via REST APIs.
+* LOW risk → Transaction approved directly
+* MEDIUM risk → OTP verification required
+* HIGH risk → Biometric authentication required
+
+The backend is built using Spring Boot, while fraud analysis and verification services run as a separate Python microservice communicating via REST APIs.
 
 ---
 
 ## ✨ Key Features
 
-* User registration and login
+* User registration and secure login
 * Product listing and cart management
-* Checkout and order creation
+* Checkout and order processing
 * AI-based fraud risk analysis
-* Risk-based transaction handling:
+* Adaptive multi-factor authentication:
 
-  * **LOW risk** → Direct success
-  * **MEDIUM risk** → Biometric verification required
-  * **HIGH risk** → Transaction blocked
-* Transaction history with fraud/success status
-* Clean REST API design
-* Database-backed persistence using MySQL
+  * **LOW risk** → Direct order placement
+  * **MEDIUM risk** → OTP verification
+  * **HIGH risk** → Biometric authentication
+* Transaction history tracking
+* Fraud status logging
+* RESTful API design
+* MySQL-based persistent storage
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Backend
-
 * Java
 * Spring Boot
 * Spring Data JPA / Hibernate
-* RESTful APIs
+* REST APIs
 
 ### Database
-
 * MySQL
 
-### AI / Fraud Detection
-
+### AI / Verification Service
 * Python
-* Flask (REST service)
+* Flask
 
 ### Frontend (Demo)
-
 * HTML
 * CSS
 * JavaScript
 
 ### Tools
-
 * Postman
 * Git
 * GitHub
@@ -70,85 +68,88 @@ The backend is built using **Spring Boot**, while fraud analysis is handled by a
 ## 🏗️ Architecture Overview
 
 ```
+
 [ Browser / Postman ]
-          |
-          v
+|
+v
 [ Spring Boot Backend ]
-          |
-          | REST API (JSON)
-          v
-[ Python Fraud Detection Service ]
+|
+| REST API (JSON)
+v
+[ Python AI & Verification Service ]
+
 ```
 
-### How it works:
+# How it works
 
-1. User checks out items from cart
+1. User checks out cart items
 2. Backend calculates total transaction amount
-3. Backend sends amount to Python AI service
+3. Backend sends amount to Python fraud service
 4. Python service returns risk level
-5. Backend applies business rules based on risk
-6. Transaction result is saved in database
+5. Backend applies risk-based authentication:
+   - LOW → Direct approval
+   - MEDIUM → OTP verification
+   - HIGH → Biometric authentication
+6. Transaction result stored in database
 
 ---
 
 ## 🔌 API Endpoints (Main)
 
 ### User APIs
-
 ```
+
+POST /api/users/register
 POST /api/users/login
+
 ```
 
 ### Product APIs
-
 ```
+
 GET /api/products
+
 ```
 
 ### Cart APIs
-
 ```
+
 POST /api/cart/add?userId={id}&productId={id}&quantity={n}
 GET  /api/cart/{userId}
+
 ```
 
 ### Order & Transaction APIs
-
 ```
+
 POST /api/orders/checkout/{userId}
 GET  /api/transactions/{userId}
-```
 
-### Python Fraud Service
-
-```
-POST http://localhost:5000/fraud/check
-```
+````
 
 ---
 
 ## ⚙️ Fraud Decision Logic
 
-| Amount Range   | Risk Level | Action Taken           |
-| -------------- | ---------- | ---------------------- |
-| ≤ 50,000       | LOW        | Order placed directly  |
-| 50,001–100,000 | MEDIUM     | Biometric verification |
-| > 100,000      | HIGH       | Transaction blocked    |
+| Amount Range   | Risk Level | Action Taken                |
+|----------------|------------|-----------------------------|
+| ≤ 50,000       | LOW        | Direct order placement      |
+| 50,001–100,000 | MEDIUM     | OTP verification required   |
+| > 100,000      | HIGH       | Biometric authentication    |
 
 ---
 
 ## ▶️ How to Run the Application
 
 ### 1️⃣ Start MySQL
-
-* Create database: `secure_ecommerce_db`
-* Update credentials in `application.properties`
+Create database: `secure_ecommerce_db`  
+Update credentials in `application.properties`
 
 ### 2️⃣ Run Spring Boot Backend
 
 ```bash
 mvn spring-boot:run
-```
+````
 
 Backend runs on:
 
@@ -156,50 +157,34 @@ Backend runs on:
 http://localhost:8080
 ```
 
-### 3️⃣ Run Python Fraud Detection Service
+### 3️⃣ Run Python Service
 
 ```bash
 python app.py
 ```
 
-Python service runs on:
+Service runs on:
 
 ```
 http://localhost:5000
 ```
 
-### 4️⃣ Test Using Browser / Postman
-
-* Login user
-* Add products to cart
-* Checkout and observe fraud handling
-* View transaction history
-
 ---
-## Related Microservice
-This backend communicates with an external Python-based
-AI fraud detection and biometric verification service.
-
-Python Service Repository:
-https://github.com/Abhishekmt18/secure-ecommerce-ai-biometric
 
 ## 🔄 Backend ↔ Python Communication
 
-* Spring Boot uses `RestTemplate`
-* Sends transaction amount as JSON
-* Python service returns fraud risk classification
-* Backend enforces business rules accordingly
+Spring Boot uses `RestTemplate` to communicate with the external service.
 
-This design mimics **real microservice communication** used in production systems.
+Backend sends transaction amount → Python service returns risk → Backend enforces authentication.
+
+This mimics real microservice-based security systems used in production.
 
 ---
 
 ## 📈 Why This Project Matters
 
-* Demonstrates **real-world backend design**
-* Shows **AI service integration**
-* Implements **risk-based decision making**
-* Uses clean architecture and REST principles
-* Suitable for **Java Backend / Full Stack Fresher roles**
-
----
+* Demonstrates real-world backend architecture
+* Shows AI service integration
+* Implements adaptive security workflows
+* Uses microservice communication
+* Suitable for Java Backend / Full Stack roles
