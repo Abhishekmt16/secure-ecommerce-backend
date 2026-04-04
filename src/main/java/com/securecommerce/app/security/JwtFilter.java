@@ -1,55 +1,80 @@
 package com.securecommerce.app.security;
 
-import com.securecommerce.app.security.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
-    @Component
-    public class JwtFilter{
+@Component
+public class JwtFilter extends OncePerRequestFilter {
 
-        @Autowired
-        private JwtUtil jwtUtil;
+    @Autowired
+    private JwtUtil jwtUtil;
 
-        /*@Override
-        protected void doFilterInternal(HttpServletRequest request,
-                                        HttpServletResponse response,
-                                        FilterChain filterChain)
-                throws ServletException, IOException {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
-            String path = request.getServletPath();
+        String path = request.getServletPath();
 
-            // ✅ Allow public URLs
-            if (
-                    path.equals("/") ||
-                            path.equals("/index.html") ||
-                            path.equals("/admin.html") ||
-                            path.equals("/checkout.html") ||
-                            path.startsWith("/css") ||
-                            path.startsWith("/js") ||
-                            path.startsWith("/images") ||
-                            path.equals("/api/users/login") ||
-                            path.equals("/api/users/register")
-            ) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            String authHeader = request.getHeader("Authorization");
-
-            // ❌ IF NO TOKEN → JUST CONTINUE (DON'T BLOCK)
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            // ✅ TOKEN EXISTS → CONTINUE
+        //  Skip login & register
+        if (
+                path.equals("/api/users/login") ||
+                        path.equals("/api/users/register") ||
+                        path.startsWith("/api/products") ||  // ✅ ADD THIS LINE
+                        path.startsWith("/api/orders")
+        ) {
             filterChain.doFilter(request, response);
-        }*/
-    }
+            return;
+        }
 
+        String authHeader = request.getHeader("Authorization");
+
+        //  No token
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Missing or invalid Authorization header");
+            return;
+        }
+
+        String token = authHeader.substring(7);
+
+        //  Invalid token
+        if (!jwtUtil.validateToken(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid JWT token");
+            return;
+        }
+
+        //  Extract email
+        String email = jwtUtil.extractEmail(token);
+
+        //  Extract role FIRST
+        String role = jwtUtil.extractRole(token);
+
+// ✅ Set authentication
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        email,
+                        null,
+                        List.of(new SimpleGrantedAuthority(role))
+                );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        filterChain.doFilter(request, response);
+    }
+}

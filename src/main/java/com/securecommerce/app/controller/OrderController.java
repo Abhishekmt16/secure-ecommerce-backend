@@ -11,6 +11,7 @@ import com.securecommerce.app.repository.TransactionRepository;
 import com.securecommerce.app.repository.UserRepository;
 import com.securecommerce.app.dto.FraudRequest;
 import com.securecommerce.app.dto.FraudResponse;
+import com.securecommerce.app.service.OtpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -40,18 +42,18 @@ public class OrderController {
     @Autowired
     private CartItemRepository cartItemRepository;
 
+    @Autowired
+    private OtpService otpService;
 
     @PostMapping("/checkout/{userId}")
-    public String checkout(@PathVariable Long userId) {
+    public String checkout(@PathVariable Long userId, @RequestBody List<Map<String, Object>> items) {
 
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return "User not found";
 
-        List<CartItem> cartItems = cartItemRepository.findByUser(user);
-
         double amount = 0;
-        for (CartItem item : cartItems) {
-            amount += item.getProduct().getPrice() * item.getQuantity();
+        for (Map<String, Object> item : items) {
+            amount += Double.parseDouble(item.get("price").toString());
         }
 
         FraudRequest request = new FraudRequest();
@@ -81,7 +83,7 @@ public class OrderController {
             txn.setUser(user);
             transactionRepository.save(txn);
 
-            cartItemRepository.deleteAll(cartItems);
+            // cartItemRepository.deleteAll(items);
 
             return "LOW risk - Order placed successfully";
         }
@@ -89,30 +91,9 @@ public class OrderController {
 
             logger.info("MEDIUM risk - OTP triggered for user {}", userId);
 
-            String otpResponse = restTemplate.postForObject(
-                    "http://localhost:5000/otp/verify",
-                    null,
-                    String.class
-            );
+            otpService.sendOtp(user.getEmail());
 
-            if (!otpResponse.contains("OTP_VERIFIED")) {
-                return "OTP verification failed";
-            }
-
-            Order order = new Order();
-            order.setTotalAmount(amount);
-            order.setUser(user);
-            orderRepository.save(order);
-
-            Transaction txn = new Transaction();
-            txn.setAmount(amount);
-            txn.setStatus(TransactionStatus.SUCCESS.name());
-            txn.setUser(user);
-            transactionRepository.save(txn);
-
-            cartItemRepository.deleteAll(cartItems);
-
-            return "MEDIUM risk - OTP verified. Order placed.";
+            return "MEDIUM risk - OTP sent";
         }
         else if (risk.equals("HIGH")) {
 
@@ -139,11 +120,15 @@ public class OrderController {
             txn.setUser(user);
             transactionRepository.save(txn);
 
-            cartItemRepository.deleteAll(cartItems);
+            // cartItemRepository.deleteAll(items);
 
             return "HIGH risk - Biometric verified. Order placed.";
         }
 
         return "Unable to process transaction";
+    }
+    @GetMapping("/user/{userId}")
+    public List<Order> getOrdersByUser(@PathVariable Long userId) {
+        return orderRepository.findByUserId(userId);
     }
 }

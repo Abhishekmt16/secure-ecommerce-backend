@@ -64,4 +64,9 @@ public class AdminController {
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
-}
+        @GetMapping("/products")
+        public String getAllProductsForAdmin() {
+            return "Admin: All products accessed";
+        }
+    }
+

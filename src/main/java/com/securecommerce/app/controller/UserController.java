@@ -1,6 +1,9 @@
 package com.securecommerce.app.controller;
 
 
+import com.securecommerce.app.dto.ApiResponse;
+import com.securecommerce.app.dto.LoginRequest;
+import com.securecommerce.app.dto.LoginResponse;
 import com.securecommerce.app.entity.User;
 import com.securecommerce.app.exception.InvalidCredentialsException;
 import com.securecommerce.app.repository.UserRepository;
@@ -39,6 +42,7 @@ public class UserController {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         user.setPassword(encoder.encode(user.getPassword()));
 
+        user.setRole("ROLE_USER"); // default role
         userRepository.save(user);
         return "User registered successfully";
     }
@@ -46,8 +50,13 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody User loginRequest) {
+    public ApiResponse<Map<String, String>> login(@RequestBody LoginRequest loginRequest) {
+
+        logger.info("Login attempt for email: {}", loginRequest.getEmail());
 
         User user = userRepository.findByEmail(loginRequest.getEmail());
 
@@ -55,18 +64,44 @@ public class UserController {
             throw new UserNotFoundException("User not found");
         }
 
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
-        if (!encoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException("Invalid credentials");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        logger.info("Login successful for email: {}", user.getEmail());
 
-        Map<String, String> response = new HashMap<>();
-        response.put("token", token);
+        String accessToken = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
 
-        return response;
+        return new ApiResponse<>(
+                true,
+                "Login successful",
+                Map.of(
+                        "accessToken", accessToken,
+                        "refreshToken", refreshToken
+                )
+        );
     }
 
+    @PostMapping("/refresh")
+    public ApiResponse<Map<String, String>> refreshToken(@RequestBody Map<String, String> request) {
+
+        String refreshToken = request.get("refreshToken");
+
+        if (!jwtUtil.validateToken(refreshToken)) {
+            throw new InvalidCredentialsException("Invalid refresh token");
+        }
+
+        String email = jwtUtil.extractEmail(refreshToken);
+
+        User user = userRepository.findByEmail(email);
+
+        String newAccessToken = jwtUtil.generateToken(user.getEmail(), user.getRole());
+
+        return new ApiResponse<>(
+                true,
+                "Token refreshed",
+                Map.of("accessToken", newAccessToken)
+        );
+    }
 }
