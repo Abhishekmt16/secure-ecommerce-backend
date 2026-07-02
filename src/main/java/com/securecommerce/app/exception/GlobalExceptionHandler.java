@@ -36,14 +36,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex) {
 
-        ex.printStackTrace(); // keep this for debugging
+        ex.printStackTrace();
 
-        ErrorResponse error = new ErrorResponse(
-                false,
-                "Something went wrong",
-                "GEN_001"
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(
+                        false,
+                        ex.getClass().getName() + " : " + ex.getMessage(),
+                        "GEN_001"
+                ));
     }
 }
