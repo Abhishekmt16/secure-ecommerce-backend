@@ -24,6 +24,9 @@ jobs:
           java-version: '17'
           distribution: 'microsoft'
 
+      - name: Give execute permission to Maven Wrapper
+        run: chmod +x mvnw
+
       - name: Build with Maven
         run: ./mvnw clean package -DskipTests
 
