@@ -6,6 +6,7 @@ import com.securecommerce.app.entity.*;
 import com.securecommerce.app.enums.TransactionStatus;
 import com.securecommerce.app.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -29,6 +30,9 @@ public class OrderService {
 
     @Autowired
     private OtpService otpService;
+
+    @Value("${ai.service.url}")
+    private String aiServiceUrl;
 
     private double tempAmount;
 
@@ -81,7 +85,7 @@ public class OrderService {
         request.setAmount(amount);
 
         FraudResponse response = restTemplate.postForObject(
-                "https://secure-ecommerce-ai-fkfjaucahddsa5a8.centralindia-01.azurewebsites.net/fraud/check",
+                aiServiceUrl + "/fraud/check",
                 request,
                 FraudResponse.class
         );
