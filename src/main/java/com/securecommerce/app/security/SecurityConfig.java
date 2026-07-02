@@ -21,10 +21,19 @@ public class SecurityConfig {
                 .cors(cors -> {})   // ✅ ADD THIS LINE
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/users/login", "/api/users/register").permitAll()
-                        .requestMatchers("/api/products/**").permitAll()   // ✅ ADD THIS LINE
-                        .requestMatchers("/api/orders/**").permitAll()   // 👈 ADD
+                        .requestMatchers(
+                                "/",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/api/users/login",
+                                "/api/users/register",
+                                "/api/products/**",
+                                "/api/orders/**"
+                        ).permitAll()
+
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

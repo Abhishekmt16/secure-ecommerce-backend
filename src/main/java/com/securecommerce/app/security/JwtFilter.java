@@ -27,19 +27,9 @@ public class JwtFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-
+        System.out.println("JWT Filter Executing");
         String path = request.getServletPath();
 
-        //  Skip login & register
-        if (
-                path.equals("/api/users/login") ||
-                        path.equals("/api/users/register") ||
-                        path.startsWith("/api/products") ||  // ✅ ADD THIS LINE
-                        path.startsWith("/api/orders")
-        ) {
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         String authHeader = request.getHeader("Authorization");
 
@@ -76,5 +66,20 @@ public class JwtFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        System.out.println("Request Path: " + request.getServletPath());
+        String path = request.getServletPath();
+
+        return path.equals("/")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
+                || path.equals("/swagger-ui.html")
+                || path.equals("/api/users/login")
+                || path.equals("/api/users/register")
+                || path.startsWith("/api/products")
+                || path.startsWith("/api/orders");
     }
 }
