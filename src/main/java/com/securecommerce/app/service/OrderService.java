@@ -81,7 +81,7 @@ public class OrderService {
         request.setAmount(amount);
 
         FraudResponse response = restTemplate.postForObject(
-                "http://localhost:5000/fraud/check",
+                "https://secure-ecommerce-ai-fkfjaucahddsa5a8.centralindia-01.azurewebsites.net/fraud/check",
                 request,
                 FraudResponse.class
         );
