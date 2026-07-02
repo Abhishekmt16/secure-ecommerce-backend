@@ -30,6 +30,8 @@ public class OrderService {
     @Autowired
     private OtpService otpService;
 
+    private double tempAmount;
+
     @Autowired
     private CartItemRepository cartItemRepository;
 
@@ -39,6 +41,7 @@ public class OrderService {
         if (user == null) return "User not found";
 
         double amount = calculateAmount(items);
+        this.tempAmount = amount;
 
         String risk = callFraudService(amount);
 
@@ -48,6 +51,13 @@ public class OrderService {
             otpService.sendOtp(user.getEmail());
             return "MEDIUM risk - OTP sent";
         } else if ("HIGH".equalsIgnoreCase(risk)) {
+
+            Order order = new Order();
+            order.setTotalAmount(amount);
+            order.setUser(user);
+            order.setStatus("BLOCKED");   // 🔥 important
+            orderRepository.save(order);
+
             return "HIGH risk - biometric required";
         }
         return "Unable to process transaction";
@@ -86,6 +96,7 @@ public class OrderService {
         Order order = new Order();
         order.setTotalAmount(amount);
         order.setUser(user);
+        order.setStatus("SUCCESS");
         orderRepository.save(order);
 
         Transaction txn = new Transaction();
@@ -102,20 +113,19 @@ public class OrderService {
     }
 
     public String verifyOtpAndPlaceOrder(String email) {
+        System.out.println("OTP METHOD CALLED");
 
         User user = userRepository.findByEmail(email);
         if (user == null) return "User not found";
 
         List<CartItem> cartItems = cartItemRepository.findByUser(user);
-
-        double amount = 0;
-        for (CartItem item : cartItems) {
-            amount += item.getProduct().getPrice() * item.getQuantity();
-        }
+        System.out.println("Cart size: " + cartItems.size());
+        double amount = this.tempAmount;
 
         Order order = new Order();
         order.setTotalAmount(amount);
         order.setUser(user);
+        order.setStatus("SUCCESS");
         orderRepository.save(order);
 
         Transaction txn = new Transaction();
