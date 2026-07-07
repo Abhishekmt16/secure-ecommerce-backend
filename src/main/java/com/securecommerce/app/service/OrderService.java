@@ -35,6 +35,7 @@ public class OrderService {
     private String aiServiceUrl;
 
     private double tempAmount;
+
     @Autowired
     private CartItemRepository cartItemRepository;
 
@@ -49,13 +50,19 @@ public class OrderService {
         String risk = callFraudService(amount);
 
         if (risk.equals("LOW")) {
-            return "LOW";
+            return handleLowRisk(user, amount);
         } else if (risk.equals("MEDIUM")) {
             otpService.sendOtp(user.getEmail());
-            return "MEDIUM";
+            return "MEDIUM risk - OTP sent";
         } else if ("HIGH".equalsIgnoreCase(risk)) {
 
-            return "HIGH";
+            Order order = new Order();
+            order.setTotalAmount(amount);
+            order.setUser(user);
+            order.setStatus("BLOCKED");   // 🔥 important
+            orderRepository.save(order);
+
+            return "HIGH risk - biometric required";
         }
         return "Unable to process transaction";
     }
@@ -88,7 +95,7 @@ public class OrderService {
 
     }
 
-    public String completeOrder(User user, double amount) {
+    private String handleLowRisk(User user, double amount) {
 
         Order order = new Order();
         order.setTotalAmount(amount);
@@ -109,29 +116,30 @@ public class OrderService {
         return orderRepository.findByUserId(userId);
     }
 
-    public String verifyOtp(String email) {
+    public String verifyOtpAndPlaceOrder(String email) {
         System.out.println("OTP METHOD CALLED");
 
-        return "OTP_VERIFIED";
-    }
-
-    public String verifyBiometric(String email) {
-        return "BIOMETRIC_VERIFIED";
-    }
-
-    public String completeOrderByEmail(String email) {
-
         User user = userRepository.findByEmail(email);
-
-        if (user == null) {
-            return "User not found";
-        }
-
-        completeOrder(user, tempAmount);
+        if (user == null) return "User not found";
 
         List<CartItem> cartItems = cartItemRepository.findByUser(user);
+        System.out.println("Cart size: " + cartItems.size());
+        double amount = this.tempAmount;
+
+        Order order = new Order();
+        order.setTotalAmount(amount);
+        order.setUser(user);
+        order.setStatus("SUCCESS");
+        orderRepository.save(order);
+
+        Transaction txn = new Transaction();
+        txn.setAmount(amount);
+        txn.setStatus(TransactionStatus.SUCCESS.name());
+        txn.setUser(user);
+        transactionRepository.save(txn);
+
         cartItemRepository.deleteAll(cartItems);
 
-        return "SUCCESS";
+        return "OTP_VERIFIED";
     }
 }
