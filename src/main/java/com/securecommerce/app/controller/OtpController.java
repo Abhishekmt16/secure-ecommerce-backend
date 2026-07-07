@@ -57,6 +57,6 @@ public class OtpController {
             return "INVALID_OTP";
         }
 
-        return orderService.verifyOtpAndPlaceOrder(email);
+        return "OTP_VERIFIED";
     }
 }
