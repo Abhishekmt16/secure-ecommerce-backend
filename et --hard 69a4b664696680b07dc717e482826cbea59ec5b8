@@ -1,0 +1,39 @@
+[33m69a4b66[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m integrating payment flow
+[33md350a2e[m security config for health monitoring
+[33m850c22a[m Merge branch 'main' of https://github.com/Abhishekmt18/secure-ecommerce-backend
+[33m435dfc9[m adding health controller
+[33mf91ed9d[m Revise README for project overview and features
+[33m2296e44[m Ai Cloud deploy
+[33m0e7c74a[m Connect backend to deployed AI service
+[33mea82d21[m Successfully deploy Spring Boot backend on Azure with PostgreSQL
+[33m1a0c72b[m Migrate project to Spring Boot 3.5 and PostgreSQL
+[33m4241a91[m exception handling for azure endpoints
+[33mef15500[m Add JWT filter debug logs
+[33mf40af64[m Use environment variables for database configuration
+[33m2e6d186[m Merge branch 'main' of https://github.com/Abhishekmt18/secure-ecommerce-backend
+[33m4cf8635[m Migrate database from MySQL to PostgreSQL
+[33meeea746[m Add execute permission to Maven Wrapper
+[33mffda439[m Refactor GitHub Actions workflow for Azure deployment
+[33m0e3bfb3[m Add or update the Azure App Service build and deployment workflow config
+[33m8d7d3d5[m Prepare project for Azure deployment
+[33m15b2364[m feat: add user registration API with BCrypt password encryption
+[33m020cf5b[m Fraud logic Updation
+[33m6909fce[m Modified properties
+[33m40d6a38[m Add initial data
+[33m416994e[m Fix Docker build (multi-stage)
+[33m8deb1bc[m Fix Docker image issue
+[33md004321[m Switched to H2 DB for deployment
+[33m39295a5[m Added Dockerfile and build jar
+[33m71dc482[m Added JWT authentication, OTP email verification, order processing, and security configuration
+[33m3647b6e[m Revise README for clarity and feature updates
+[33mee99a8e[m Controller layer modification
+[33mc3b1a99[m Added OrderController, fraud risk logic, biometric verification, cart clearing after checkout
+[33mfc8be51[m Update README.md
+[33m7d90ba9[m Add README for secure e-commerce application
+[33m6cdde09[m Refactored admin APIs to use DTOs and hide sensitive data
+[33m284433f[m Fixed fraud risk handling and added biometric flow for medium risk
+[33m5e80873[m Integrated AI fraud detection into checkout flow
+[33m263ae11[m Added cart and checkout modules with orders and transactions
+[33m961c29f[m Added user login API
+[33m8acc703[m Test commit with correct author
+[33mbf40c5e[m Initial commit
